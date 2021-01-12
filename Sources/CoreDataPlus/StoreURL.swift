@@ -1,0 +1,78 @@
+import Foundation
+#if canImport(CoreData)
+import CoreData
+
+public struct StoreURL: RawRepresentable {
+    public let rawValue: URL
+    public let storeType = NSSQLiteStoreType
+    public var fileManager: FileManager = .default
+    
+    public init?(rawValue: URL) {
+        guard rawValue.pathExtension.lowercased().hasSuffix(.sqlite) else {
+            return nil
+        }
+        
+        self.rawValue = rawValue
+    }
+    
+    public init(currentDirectory resource: String, fileManager: FileManager = .default) {
+        let directory = URL(fileURLWithPath: fileManager.currentDirectoryPath, isDirectory: true)
+        let path = "\(resource).\(String.sqlite)"
+        rawValue = URL(fileURLWithPath: path, relativeTo: directory)
+        self.fileManager = fileManager
+    }
+    
+    public init(applicationSupport resource: String, folder: String, fileManager: FileManager = .default) throws {
+        let root: URL
+        #if os(tvOS)
+        root = try fileManager.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        #else
+        root = try fileManager.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        #endif
+        
+        let directory = root.appendingPathComponent(folder, isDirectory: true)
+        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
+        let path = "\(resource).\(String.sqlite)"
+        rawValue = URL(fileURLWithPath: directory.appendingPathComponent(path).path)
+        self.fileManager = fileManager
+    }
+}
+
+public extension StoreURL {
+    /// The sql store _shared memory_ url.
+    var shmURL: URL {
+        rawValue.deletingPathExtension().appendingPathExtension(.sqlite_shm)
+    }
+    
+    /// The sql store _write-ahead-log_ url.
+    var walURL: URL {
+        rawValue.deletingPathExtension().appendingPathExtension(.sqlite_wal)
+    }
+    
+    /// The current URL with the '_temp" suffix.
+    var temporaryStoreURL: StoreURL {
+        let name = rawValue.deletingPathExtension().lastPathComponent
+        let url = rawValue
+            .deletingLastPathComponent()
+            .appendingPathComponent("\(name)\(String.temp)")
+            .appendingPathExtension(.sqlite)
+        guard let storeURL = StoreURL(rawValue: url) else {
+            preconditionFailure("Unable to generate temporary store url.")
+        }
+        return storeURL
+    }
+    
+    /// Removes the underlying SQL store and related files.
+    func destroy() throws {
+        if fileManager.fileExists(atPath: rawValue.path) {
+            try fileManager.removeItem(at: rawValue)
+        }
+        if fileManager.fileExists(atPath: shmURL.path) {
+            try fileManager.removeItem(at: shmURL)
+        }
+        if fileManager.fileExists(atPath: walURL.path) {
+            try fileManager.removeItem(at: walURL)
+        }
+    }
+}
+#endif

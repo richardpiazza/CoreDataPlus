@@ -100,7 +100,7 @@ final class CoreDataPlusTests: XCTestCase {
     
     func testModel_1_0_Initialization() throws {
         let storeURL = StoreURL(currentDirectory: "Model_1_0")
-        let container: CatalogContainer<ManagedModel> = try .init(version: .v1_0, persistence: .store(storeURL), name: "ManagedModel")
+        let container: CatalogContainer<ManagedModel, NSPersistentContainer> = try .init(version: .v1_0, persistence: .store(storeURL), name: "ManagedModel")
         let context = container.persistentContainer.viewContext
         let author: AuthorV1_0 = context.make()
         author.id = UUID(uuidString: "ef71d564-cb1a-4a33-b55e-1d14c08cf329")!
@@ -117,7 +117,7 @@ final class CoreDataPlusTests: XCTestCase {
     
     func testModel_1_1_Initialization() throws {
         let storeURL = StoreURL(currentDirectory: "Model_1_1")
-        let container: CatalogContainer<ManagedModel> = try .init(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
+        let container: CatalogContainer<ManagedModel, NSPersistentContainer> = try .init(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
         let context = container.persistentContainer.viewContext
         let author: AuthorV1_1 = context.make()
         author.id = UUID(uuidString: "ef71d564-cb1a-4a33-b55e-1d14c08cf329")!
@@ -137,7 +137,7 @@ final class CoreDataPlusTests: XCTestCase {
         let bookId: UUID = try XCTUnwrap(UUID(uuidString: "c53c84c8-ea05-4517-b0b5-5eaf09d1514e"))
         
         let storeURL = StoreURL(currentDirectory: "ManagedModel")
-        var container: CatalogContainer<ManagedModel>
+        var container: CatalogContainer<ManagedModel, NSPersistentContainer>
         var context: NSManagedObjectContext
         
         container = try .init(version: .v1_0, persistence: .store(storeURL), name: "ManagedModel")

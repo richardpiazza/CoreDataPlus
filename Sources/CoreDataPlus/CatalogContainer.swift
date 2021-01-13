@@ -2,7 +2,7 @@ import Foundation
 #if canImport(CoreData)
 import CoreData
 
-public struct CatalogContainer<Catalog: ModelCatalog> {
+public class CatalogContainer<Catalog: ModelCatalog, Container: NSPersistentContainer> {
     public enum Persistence {
         /// `NSSQLiteStoreType`
         case store(_ storeURL: StoreURL)
@@ -10,10 +10,10 @@ public struct CatalogContainer<Catalog: ModelCatalog> {
         case memory
     }
     
-    let persistentContainer: NSPersistentContainer
-    let version: Catalog.Version
+    public let persistentContainer: Container
+    public let version: Catalog.Version
     /// When a migration occurs, the source version will be listed here.
-    let migrationSource: Catalog.Version?
+    public let migrationSource: Catalog.Version?
     
     /// Initializes the `NSPersistentContainer` with a specified `Model` version.
     ///
@@ -26,7 +26,7 @@ public struct CatalogContainer<Catalog: ModelCatalog> {
     /// - parameter persistence: Controls the underlying storage mechanism.
     /// - parameter name: The name used by the persistent container.
     /// - parameter silentMigration: When enabled, some migration errors will fall back to a clean state.
-    init(version: Catalog.Version, persistence: Persistence, name: String, silentMigration: Bool = true) throws {
+    public init(version: Catalog.Version, persistence: Persistence, name: String, silentMigration: Bool = true) throws {
         self.version = version
         
         if case let .store(storeURL) = persistence {
@@ -52,7 +52,7 @@ public struct CatalogContainer<Catalog: ModelCatalog> {
             migrationSource = nil
         }
         
-        persistentContainer = .init(name: name, managedObjectModel: version.managedObjectModel)
+        persistentContainer = Container(name: name, managedObjectModel: version.managedObjectModel)
         
         let description = NSPersistentStoreDescription()
         description.shouldInferMappingModelAutomatically = false

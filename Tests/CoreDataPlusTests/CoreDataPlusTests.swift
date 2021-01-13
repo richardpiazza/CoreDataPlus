@@ -173,6 +173,7 @@ final class CoreDataPlusTests: XCTestCase {
         XCTAssertEqual(book.isbn, "9780525520061")
         
         try container.unload()
+        try container.checkpoint()
         try storeURL.destroy()
     }
     #endif

@@ -41,7 +41,7 @@ public struct Migrator<Catalog: ModelCatalog> {
         }
         
         let sourceModel = source.managedObjectModel
-        try checkpoint(storeAtURL: storeURL, model: sourceModel, configurationName: configurationName)
+        try NSPersistentStoreCoordinator.checkpoint(storeAtURL: storeURL.rawValue, model: sourceModel, name: configurationName)
         
         let tempURL: URL = storeURL.temporaryStoreURL.rawValue
         let storeType = storeURL.storeType
@@ -63,13 +63,6 @@ public struct Migrator<Catalog: ModelCatalog> {
 }
 
 private extension Migrator {
-    func checkpoint(storeAtURL url: StoreURL, model: NSManagedObjectModel, configurationName: String) throws {
-        let coordinator = NSPersistentStoreCoordinator(managedObjectModel: model)
-        let options = [NSSQLitePragmasOption: ["journal_mode": "DELETE"]]
-        let store = try coordinator.addPersistentStore(ofType: url.storeType, configurationName: configurationName, at: url.rawValue, options: options)
-        try coordinator.remove(store)
-    }
-    
     func migrationSteps(from: Catalog.Version, to: Catalog.Version) throws -> [Step] {
         var steps: [Step] = []
         

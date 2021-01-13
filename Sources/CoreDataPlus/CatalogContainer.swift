@@ -5,7 +5,12 @@ import CoreData
 public class CatalogContainer<Catalog: ModelCatalog, Container: NSPersistentContainer> {
     
     public let persistentContainer: Container
+    /// Model version used by the `Container`
     public let version: Catalog.Version
+    /// Underlying storage mechanism used by the `Container`
+    public let persistence: Persistence
+    /// The name used by the `Container`
+    public let name: String
     /// When a migration occurs, the source version will be listed here.
     public let migrationSource: Catalog.Version?
     
@@ -22,6 +27,8 @@ public class CatalogContainer<Catalog: ModelCatalog, Container: NSPersistentCont
     /// - parameter silentMigration: When enabled, some migration errors will fall back to a clean state.
     public init(version: Catalog.Version, persistence: Persistence, name: String, silentMigration: Bool = true) throws {
         self.version = version
+        self.persistence = persistence
+        self.name = name
         
         if case let .store(storeURL) = persistence {
             let migrator = Migrator<Catalog>()
@@ -77,6 +84,7 @@ public class CatalogContainer<Catalog: ModelCatalog, Container: NSPersistentCont
 }
 
 public extension CatalogContainer {
+    /// The path to the first persistent store.
     var path: String? {
         persistentContainer.persistentStoreCoordinator.persistentStores.first?.url?.path
     }
@@ -88,6 +96,15 @@ public extension CatalogContainer {
         for store in persistentContainer.persistentStoreCoordinator.persistentStores {
             try persistentContainer.persistentStoreCoordinator.remove(store)
         }
+    }
+    
+    /// Causes the write-ahead log to be integrated into the primary sqlite table.
+    func checkpoint() throws {
+        guard case .store(let storeURL) = persistence else {
+            return
+        }
+        
+        try NSPersistentStoreCoordinator.checkpoint(storeAtURL: storeURL.rawValue, model: version.managedObjectModel, name: name)
     }
 }
 #endif

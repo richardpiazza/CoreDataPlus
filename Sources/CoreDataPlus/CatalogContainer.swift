@@ -3,12 +3,6 @@ import Foundation
 import CoreData
 
 public class CatalogContainer<Catalog: ModelCatalog, Container: NSPersistentContainer> {
-    public enum Persistence {
-        /// `NSSQLiteStoreType`
-        case store(_ storeURL: StoreURL)
-        /// `NSInMemoryStoreType`
-        case memory
-    }
     
     public let persistentContainer: Container
     public let version: Catalog.Version

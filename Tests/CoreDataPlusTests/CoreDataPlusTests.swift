@@ -111,7 +111,7 @@ final class CoreDataPlusTests: XCTestCase {
         book.isbn = "9780525520061"
         author.addToBooks(book)
         try context.save()
-        try container.unload()
+        try container.checkpointAndClose()
         try storeURL.destroy()
     }
     
@@ -128,7 +128,7 @@ final class CoreDataPlusTests: XCTestCase {
         book.isbn = "9780525520061"
         author.addToAuthoredBooks(book)
         try context.save()
-        try container.unload()
+        try container.checkpointAndClose()
         try storeURL.destroy()
     }
     
@@ -155,7 +155,7 @@ final class CoreDataPlusTests: XCTestCase {
         garyTaubes.addToBooks(caseForKeto)
         
         try context.save()
-        try container.unload()
+        try container.checkpointAndClose()
         
         container = try .init(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel", silentMigration: false)
         context = container.persistentContainer.viewContext
@@ -172,8 +172,43 @@ final class CoreDataPlusTests: XCTestCase {
         XCTAssertEqual(book.title, "The Case for Keto")
         XCTAssertEqual(book.isbn, "9780525520061")
         
-        try container.unload()
-        try container.checkpoint()
+        try container.checkpointAndClose()
+        try storeURL.destroy()
+    }
+    
+    func testUsageAfterCheckpoint() throws {
+        let storeURL = StoreURL(currentDirectory: "CheckpointTest")
+        let container: CatalogContainer<ManagedModel, NSPersistentContainer> = try .init(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
+        let context = container.persistentContainer.viewContext
+        
+        var author: AuthorV1_1 = context.make()
+        author.id = UUID(uuidString: "ef71d564-cb1a-4a33-b55e-1d14c08cf329")!
+        author.name = "Gary Taubes"
+        
+        let book: BookV1_1 = context.make()
+        book.id = UUID(uuidString: "60cc517a-f62c-40d2-aa55-0718f3cd7390")!
+        book.title = "The Case for Keto"
+        book.isbn = "9780525520061"
+        
+        author.addToAuthoredBooks(book)
+        
+        try context.save()
+        
+        try container.checkpointAndContinue()
+        
+        let id = author.objectID
+        author = try XCTUnwrap(context.object(with: id) as? AuthorV1_1)
+        
+        let anotherBook: BookV1_1 = context.make()
+        anotherBook.id = UUID(uuidString: "B3B5C965-94A7-4243-B478-D5718D7B67C1")
+        anotherBook.title = "The Case Against Sugar"
+        anotherBook.isbn = "9780307946645"
+        
+        author.addToAuthoredBooks(anotherBook)
+        
+        try context.save()
+        
+        try container.checkpointAndClose()
         try storeURL.destroy()
     }
     #endif

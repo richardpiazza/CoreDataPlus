@@ -92,6 +92,7 @@ public extension CatalogContainer {
     /// Removed all stores from the `persistentStoreCoordinator`
     ///
     /// **WARNING**: The container & related context will be un-usable until a store has been reloaded.
+    @available(*, deprecated, renamed: "checkpointAndClose()")
     func unload() throws {
         for store in persistentContainer.persistentStoreCoordinator.persistentStores {
             try persistentContainer.persistentStoreCoordinator.remove(store)
@@ -99,12 +100,57 @@ public extension CatalogContainer {
     }
     
     /// Causes the write-ahead log to be integrated into the primary sqlite table.
+    @available(*, deprecated, renamed: "checkpointAndContinue()")
     func checkpoint() throws {
+        try checkpointAndContinue()
+    }
+    
+    /// Causes the write-ahead log to be integrated into the primary sqlite table.
+    ///
+    /// **WARNING**: The persistent container stores will be re-added, and all existing object references will become invalid.
+    func checkpointAndContinue() throws {
+        try checkpoint(reopen: true)
+        persistentContainer.viewContext.refreshAllObjects()
+    }
+    
+    /// Causes the write-ahead log to be integrated into the primary sqlite table.
+    func checkpointAndClose() throws {
+        try checkpoint(reopen: false)
+    }
+}
+
+private extension CatalogContainer {
+    func checkpoint(reopen: Bool) throws {
         guard case .store(let storeURL) = persistence else {
             return
         }
         
+        if persistentContainer.viewContext.hasChanges {
+            try persistentContainer.viewContext.save()
+        }
+        
+        let coordinator = persistentContainer.persistentStoreCoordinator
+        let descriptions = persistentContainer.persistentStoreDescriptions
+        let stores = coordinator.persistentStores
+        try stores.forEach { try coordinator.remove($0) }
+        
         try NSPersistentStoreCoordinator.checkpoint(storeAtURL: storeURL.rawValue, model: version.managedObjectModel, name: name)
+        
+        guard reopen else {
+            return
+        }
+        
+        try descriptions.forEach {
+            var thrown: Error?
+            coordinator.addPersistentStore(with: $0) { (_, error) in
+                if let e = error {
+                    thrown = e
+                }
+            }
+            if let error = thrown {
+                throw error
+            }
+        }
     }
 }
 #endif

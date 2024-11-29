@@ -3,6 +3,7 @@ import XCTest
 #if canImport(CoreData)
 import CoreData
 #endif
+import Darwin
 
 final class CoreDataPlusTests: XCTestCase {
     
@@ -42,7 +43,7 @@ final class CoreDataPlusTests: XCTestCase {
                 resource = "CoreDataPlus_1.1"
             }
             
-            guard let model = try? Bundle.module.managedObjectModel(forResource: resource) else {
+            guard let model = try? Bundle.module.managedObjectModel(forResource: resource, subdirectory: "PrecompiledResources") else {
                 preconditionFailure("Unable to load model for resource '\(resource)'.")
             }
             
@@ -62,7 +63,7 @@ final class CoreDataPlusTests: XCTestCase {
                 resource = "Model_1_0_to_1_1"
             }
             
-            guard let mapping = try? Bundle.module.mappingModel(forResource: resource) else {
+            guard let mapping = try? Bundle.module.mappingModel(forResource: resource, subdirectory: "PrecompiledResources") else {
                 preconditionFailure("Update to load mapping for resource '\(resource)'.")
             }
             
@@ -100,7 +101,7 @@ final class CoreDataPlusTests: XCTestCase {
     
     func testModel_1_0_Initialization() throws {
         let storeURL = StoreURL(currentDirectory: "Model_1_0")
-        let container: CatalogContainer<ManagedModel, NSPersistentContainer> = try .init(version: .v1_0, persistence: .store(storeURL), name: "ManagedModel")
+        let container: CatalogContainer<ManagedModel> = try .init(version: .v1_0, persistence: .store(storeURL), name: "ManagedModel")
         let context = container.persistentContainer.viewContext
         let author: AuthorV1_0 = context.make()
         author.id = UUID(uuidString: "ef71d564-cb1a-4a33-b55e-1d14c08cf329")!
@@ -117,7 +118,7 @@ final class CoreDataPlusTests: XCTestCase {
     
     func testModel_1_1_Initialization() throws {
         let storeURL = StoreURL(currentDirectory: "Model_1_1")
-        let container: CatalogContainer<ManagedModel, NSPersistentContainer> = try .init(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
+        let container: CatalogContainer<ManagedModel> = try .init(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
         let context = container.persistentContainer.viewContext
         let author: AuthorV1_1 = context.make()
         author.id = UUID(uuidString: "ef71d564-cb1a-4a33-b55e-1d14c08cf329")!
@@ -137,7 +138,7 @@ final class CoreDataPlusTests: XCTestCase {
         let bookId: UUID = try XCTUnwrap(UUID(uuidString: "c53c84c8-ea05-4517-b0b5-5eaf09d1514e"))
         
         let storeURL = StoreURL(currentDirectory: "ManagedModel")
-        var container: CatalogContainer<ManagedModel, NSPersistentContainer>
+        var container: CatalogContainer<ManagedModel>
         var context: NSManagedObjectContext
         
         container = try .init(version: .v1_0, persistence: .store(storeURL), name: "ManagedModel")
@@ -178,7 +179,7 @@ final class CoreDataPlusTests: XCTestCase {
     
     func testUsageAfterCheckpoint() throws {
         let storeURL = StoreURL(currentDirectory: "CheckpointTest")
-        let container: CatalogContainer<ManagedModel, NSPersistentContainer> = try .init(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
+        let container: CatalogContainer<ManagedModel> = try .init(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
         let context = container.persistentContainer.viewContext
         
         var author: AuthorV1_1 = context.make()

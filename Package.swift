@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.9
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -6,10 +6,11 @@ import PackageDescription
 let package = Package(
     name: "CoreDataPlus",
     platforms: [
-        .macOS(.v10_14),
-        .iOS(.v12),
-        .tvOS(.v12),
-        .watchOS(.v5),
+        .macOS(.v12),
+        .macCatalyst(.v15),
+        .iOS(.v15),
+        .tvOS(.v15),
+        .watchOS(.v8)
     ],
     products: [
         .library(
@@ -20,17 +21,23 @@ let package = Package(
         ),
     ],
     dependencies: [
+        .package(url: "https://github.com/richardpiazza/Occurrence.git", .upToNextMajor(from: "0.7.2")),
     ],
     targets: [
         .target(
             name: "CoreDataPlus",
-            dependencies: []
+            dependencies: [
+                .product(name: "Occurrence", package: "Occurrence"),
+            ]
         ),
         .testTarget(
             name: "CoreDataPlusTests",
-            dependencies: ["CoreDataPlus"],
+            dependencies: [
+                "CoreDataPlus"
+            ],
             resources: [
-                .process("Resources")
+                .process("Resources"),
+                .copy("PrecompiledResources"),
             ]
         ),
     ],

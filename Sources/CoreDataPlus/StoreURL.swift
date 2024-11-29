@@ -8,7 +8,7 @@ public struct StoreURL: RawRepresentable {
     public var fileManager: FileManager = .default
     
     public init?(rawValue: URL) {
-        guard rawValue.pathExtension.lowercased().hasSuffix(.sqlite) else {
+        guard rawValue.pathExtension.lowercased().hasSuffix(FileExtension.sqlite.rawValue) else {
             return nil
         }
         
@@ -17,7 +17,7 @@ public struct StoreURL: RawRepresentable {
     
     public init(currentDirectory resource: String, fileManager: FileManager = .default) {
         let directory = URL(fileURLWithPath: fileManager.currentDirectoryPath, isDirectory: true)
-        let path = "\(resource).\(String.sqlite)"
+        let path = "\(resource).\(FileExtension.sqlite.rawValue)"
         rawValue = URL(fileURLWithPath: path, relativeTo: directory)
         self.fileManager = fileManager
     }
@@ -32,7 +32,7 @@ public struct StoreURL: RawRepresentable {
         
         let directory = root.appendingPathComponent(folder, isDirectory: true)
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
-        let path = "\(resource).\(String.sqlite)"
+        let path = "\(resource).\(FileExtension.sqlite.rawValue)"
         rawValue = URL(fileURLWithPath: directory.appendingPathComponent(path).path)
         self.fileManager = fileManager
     }
@@ -41,12 +41,12 @@ public struct StoreURL: RawRepresentable {
 public extension StoreURL {
     /// The sql store _shared memory_ url.
     var shmURL: URL {
-        rawValue.deletingPathExtension().appendingPathExtension(.sqlite_shm)
+        rawValue.deletingPathExtension().appendingPathExtension(FileExtension.sqliteSharedMemory.rawValue)
     }
     
     /// The sql store _write-ahead-log_ url.
     var walURL: URL {
-        rawValue.deletingPathExtension().appendingPathExtension(.sqlite_wal)
+        rawValue.deletingPathExtension().appendingPathExtension(FileExtension.sqliteWriteAheadLog.rawValue)
     }
     
     /// The current URL with the '_temp" suffix.
@@ -54,8 +54,8 @@ public extension StoreURL {
         let name = rawValue.deletingPathExtension().lastPathComponent
         let url = rawValue
             .deletingLastPathComponent()
-            .appendingPathComponent("\(name)\(String.temp)")
-            .appendingPathExtension(.sqlite)
+            .appendingPathComponent("\(name)\(ResourceSuffix.temporary.rawValue)")
+            .appendingPathExtension(FileExtension.sqlite.rawValue)
         guard let storeURL = StoreURL(rawValue: url) else {
             preconditionFailure("Unable to generate temporary store url.")
         }

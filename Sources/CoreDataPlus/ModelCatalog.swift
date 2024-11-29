@@ -19,9 +19,16 @@ public extension ModelCatalog {
     }
     
     static func versionForStore(_ storeURL: StoreURL, configurationName: String) throws -> Version? {
-        let metadata = try NSPersistentStoreCoordinator
-            .metadataForPersistentStore(ofType: NSSQLiteStoreType, at: storeURL.rawValue, options: nil)
-        return versionCompatibleWith(metadata: metadata, configurationName: configurationName)
+        let metadata = try NSPersistentStoreCoordinator.metadataForPersistentStore(
+            ofType: NSSQLiteStoreType,
+            at: storeURL.rawValue,
+            options: nil
+        )
+        
+        return versionCompatibleWith(
+            metadata: metadata,
+            configurationName: configurationName
+        )
     }
     
     static func versionAfter(_ version: Version) -> Version? {

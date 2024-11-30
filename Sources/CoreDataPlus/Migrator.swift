@@ -1,8 +1,10 @@
 import Foundation
+import Logging
 #if canImport(CoreData)
 import CoreData
 
 public struct Migrator<Catalog: ModelCatalog> {
+    @available(*, deprecated, message: "Use `CoreDataPlusError`.")
     public enum Error: Swift.Error {
         case resource(name: String)
         case load(url: URL)
@@ -25,19 +27,23 @@ public struct Migrator<Catalog: ModelCatalog> {
         
         let destinationModel = destination.managedObjectModel
         
-        let metadata = try NSPersistentStoreCoordinator
-            .metadataForPersistentStore(ofType: storeURL.storeType, at: storeURL.rawValue, options: nil)
+        let metadata = try NSPersistentStoreCoordinator.metadataForPersistentStore(
+            ofType: storeURL.storeType,
+            at: storeURL.rawValue,
+            options: nil
+        )
+        
         if destinationModel.isConfiguration(withName: configurationName, compatibleWithStoreMetadata: metadata) {
             // The store is already consistent with the destination version.
             return nil
         }
         
         guard let source = Catalog.versionCompatibleWith(metadata: metadata, configurationName: configurationName) else {
-            throw Error.unidentifiedSource
+            throw Logger.coreDataPlus.error("No Source Version", error: CoreDataPlusError.migrationSource(storeURL.rawValue.absoluteString))
         }
         
         guard Catalog.pathExists(from: source, to: destination) else {
-            throw Error.noMigrationPath
+            throw Logger.coreDataPlus.error("No Migration Path", error: CoreDataPlusError.migrationPath(source: source.id, destination: destination.id))
         }
         
         let sourceModel = source.managedObjectModel
@@ -50,11 +56,32 @@ public struct Migrator<Catalog: ModelCatalog> {
         for step in steps {
             let source = step.source.managedObjectModel
             let destination = step.destination.managedObjectModel
-            let manager = NSMigrationManager(sourceModel: source, destinationModel: destination)
+            let manager = NSMigrationManager(
+                sourceModel: source,
+                destinationModel: destination
+            )
             let coordinator = NSPersistentStoreCoordinator(managedObjectModel: .init())
-            try manager.migrateStore(from: storeURL.rawValue, sourceType: storeType, options: nil, with: step.mapping, toDestinationURL: tempURL, destinationType: storeType, destinationOptions: nil)
-            try coordinator.destroyPersistentStore(at: storeURL.rawValue, ofType: storeType, options: nil)
-            try coordinator.replacePersistentStore(at: storeURL.rawValue, destinationOptions: nil, withPersistentStoreFrom: tempURL, sourceOptions: nil, ofType: storeType)
+            try manager.migrateStore(
+                from: storeURL.rawValue,
+                sourceType: storeType,
+                options: nil,
+                with: step.mapping,
+                toDestinationURL: tempURL,
+                destinationType: storeType,
+                destinationOptions: nil
+            )
+            try coordinator.destroyPersistentStore(
+                at: storeURL.rawValue,
+                ofType: storeType,
+                options: nil
+            )
+            try coordinator.replacePersistentStore(
+                at: storeURL.rawValue,
+                destinationOptions: nil,
+                withPersistentStoreFrom: tempURL,
+                sourceOptions: nil,
+                ofType: storeType
+            )
             try FileManager.default.removeItem(at: tempURL)
         }
         
@@ -73,10 +100,16 @@ private extension Migrator {
         var current: Catalog.Version = from
         while let next = Catalog.versionAfter(current) {
             guard let mapping = next.mappingModel else {
-                throw Error.mapping(source: current, destination: next)
+                throw Logger.coreDataPlus.error("Invalid Migration Mapping", error: CoreDataPlusError.migrationMapping(source: current.id, destination: next.id))
             }
             
-            steps.append(Step(source: current, destination: next, mapping: mapping))
+            steps.append(
+                Step(
+                    source: current,
+                    destination: next,
+                    mapping: mapping
+                )
+            )
             
             guard next.id != to.id else {
                 return steps

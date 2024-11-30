@@ -1,21 +1,11 @@
 import Foundation
+import Logging
 #if canImport(CoreData)
 import CoreData
 
 public extension Bundle {
-    enum ResourceError: LocalizedError {
-        case notFound(_ resource: String, _ bundle: Bundle)
-        case contents(_ type: Any.Type, _ path: String)
-        
-        public var errorDescription: String? {
-            switch self {
-            case .notFound(let resource, let bundle):
-                return "No URL for Resource '\(resource)' in Bundle '\(bundle.bundlePath)'."
-            case .contents(let type, let path):
-                return "Unable to load contents of \(type) at URL '\(path)'."
-            }
-        }
-    }
+    @available(*, deprecated, renamed: "CoreDataPlusError")
+    typealias ResourceError = CoreDataPlusError
     
     /// Retrieve a `NSManagedObjectModel` from the bundle.
     ///
@@ -26,20 +16,29 @@ public extension Bundle {
     /// You can manually pre-compile `NSManagedObjectModel`s using the `momc` command found in the Xcode.app bundle.
     /// `/Applications/Xcode.app/Contents/Developer/usr/bin/momc`.
     ///
-    /// - parameter resource: The name of the resource file (without extension)
-    func managedObjectModel(forResource resource: String) throws -> NSManagedObjectModel {
+    /// - parameters
+    ///   - resource: The name of the resource file (without extension)
+    ///   - subdirectory: Path subdirectory where the resource may be found.
+    func managedObjectModel(forResource resource: String, subdirectory: String? = nil) throws -> NSManagedObjectModel {
         let url: URL
         
-        if let _url = self.url(forResource: resource, withExtension: .momd) {
+        let dataModel = FileExtension.compiledDataModel.rawValue
+        let dataModelPrecompiled = "\(FileExtension.compiledDataModel.rawValue)\(ResourceSuffix.precompiled.rawValue)"
+        
+        if let _url = self.url(forResource: resource, withExtension: dataModel) {
             url = _url
-        } else if let _url = self.url(forResource: resource, withExtension: "\(String.momd)\(String.precompiled)") {
+        } else if let _url = self.url(forResource: resource, withExtension: dataModelPrecompiled) {
+            url = _url
+        } else if let _url = self.url(forResource: resource, withExtension: dataModel, subdirectory: subdirectory) {
+            url = _url
+        } else if let _url = self.url(forResource: resource, withExtension: dataModelPrecompiled, subdirectory: subdirectory) {
             url = _url
         } else {
-            throw ResourceError.notFound(resource, self)
+            throw Logger.coreDataPlus.error("Resource Not Found", error: CoreDataPlusError.resourceNotFound(resource, bundlePath: bundlePath))
         }
         
         guard let model = NSManagedObjectModel(contentsOf: url) else {
-            throw ResourceError.contents(NSManagedObjectModel.self, url.path)
+            throw Logger.coreDataPlus.error("Resource Corrupted", error: CoreDataPlusError.resourceContents("NSManagedObjectModel", path: url.path))
         }
         
         return model
@@ -54,20 +53,29 @@ public extension Bundle {
     /// You can manually pre-compile `NSMappingModel`s using the `mapc` command found in the Xcode.app bundle.
     /// `/Applications/Xcode.app/Contents/Developer/usr/bin/mapc`.
     ///
-    /// - parameter resource: The name of the resource file (without extension)
-    func mappingModel(forResource resource: String) throws -> NSMappingModel {
+    /// - parameters
+    ///   - resource: The name of the resource file (without extension)
+    ///   - subdirectory: Path subdirectory where the resource may be found.
+    func mappingModel(forResource resource: String, subdirectory: String? = nil) throws -> NSMappingModel {
         let url: URL
         
-        if let _url = self.url(forResource: resource, withExtension: .cdm) {
+        let mappingModel = FileExtension.compiledMappingModel.rawValue
+        let mappingModelPrecompiled = "\(FileExtension.compiledMappingModel.rawValue)\(ResourceSuffix.precompiled.rawValue)"
+        
+        if let _url = self.url(forResource: resource, withExtension: mappingModel) {
             url = _url
-        } else if let _url = self.url(forResource: resource, withExtension: "\(String.cdm)\(String.precompiled)") {
+        } else if let _url = self.url(forResource: resource, withExtension: mappingModelPrecompiled) {
+            url = _url
+        } else if let _url = self.url(forResource: resource, withExtension: mappingModel, subdirectory: subdirectory) {
+            url = _url
+        } else if let _url = self.url(forResource: resource, withExtension: mappingModelPrecompiled, subdirectory: subdirectory) {
             url = _url
         } else {
-            throw ResourceError.notFound(resource, self)
+            throw Logger.coreDataPlus.error("Resource Not Found", error: CoreDataPlusError.resourceNotFound(resource, bundlePath: bundlePath))
         }
         
         guard let mapping = NSMappingModel(contentsOf: url) else {
-            throw ResourceError.contents(NSMappingModel.self, url.path)
+            throw Logger.coreDataPlus.error("Resource Corrupted", error: CoreDataPlusError.resourceContents("NSMappingModel", path: url.path))
         }
         
         return mapping

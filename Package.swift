@@ -21,13 +21,13 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/richardpiazza/Occurrence.git", .upToNextMajor(from: "0.7.2")),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.6.2"),
     ],
     targets: [
         .target(
             name: "CoreDataPlus",
             dependencies: [
-                .product(name: "Occurrence", package: "Occurrence"),
+                .product(name: "Logging", package: "swift-log"),
             ]
         ),
         .testTarget(

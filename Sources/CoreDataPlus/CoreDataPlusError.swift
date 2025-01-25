@@ -1,6 +1,5 @@
 import Foundation
 import Logging
-import Occurrence
 
 public enum CoreDataPlusError: Error {
     case resourceNotFound(_ resource: String, bundlePath: String)
@@ -76,7 +75,4 @@ extension CoreDataPlusError: CustomNSError {
             ]
         }
     }
-}
-
-extension CoreDataPlusError: LoggableError {
 }

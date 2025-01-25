@@ -34,11 +34,19 @@ public extension Bundle {
         } else if let _url = self.url(forResource: resource, withExtension: dataModelPrecompiled, subdirectory: subdirectory) {
             url = _url
         } else {
-            throw Logger.coreDataPlus.error("Resource Not Found", error: CoreDataPlusError.resourceNotFound(resource, bundlePath: bundlePath))
+            Logger.coreDataPlus.error("Resource Not Found", metadata: [
+                "resource": .string(resource),
+                "subdirectory": .string(subdirectory ?? ""),
+                "bundlePath" : .string(bundlePath),
+            ])
+            throw CoreDataPlusError.resourceNotFound(resource, bundlePath: bundlePath)
         }
         
         guard let model = NSManagedObjectModel(contentsOf: url) else {
-            throw Logger.coreDataPlus.error("Resource Corrupted", error: CoreDataPlusError.resourceContents("NSManagedObjectModel", path: url.path))
+            Logger.coreDataPlus.error("Resource Corrupted", metadata: [
+                "url": .stringConvertible(url),
+            ])
+            throw CoreDataPlusError.resourceContents("NSManagedObjectModel", path: url.path)
         }
         
         return model
@@ -71,11 +79,19 @@ public extension Bundle {
         } else if let _url = self.url(forResource: resource, withExtension: mappingModelPrecompiled, subdirectory: subdirectory) {
             url = _url
         } else {
-            throw Logger.coreDataPlus.error("Resource Not Found", error: CoreDataPlusError.resourceNotFound(resource, bundlePath: bundlePath))
+            Logger.coreDataPlus.error("Resource Not Found", metadata: [
+                "resource": .string(resource),
+                "subdirectory": .string(subdirectory ?? ""),
+                "bundlePath" : .string(bundlePath),
+            ])
+            throw CoreDataPlusError.resourceNotFound(resource, bundlePath: bundlePath)
         }
         
         guard let mapping = NSMappingModel(contentsOf: url) else {
-            throw Logger.coreDataPlus.error("Resource Corrupted", error: CoreDataPlusError.resourceContents("NSMappingModel", path: url.path))
+            Logger.coreDataPlus.error("Resource Corrupted", metadata: [
+                "url": .stringConvertible(url),
+            ])
+            throw CoreDataPlusError.resourceContents("NSMappingModel", path: url.path)
         }
         
         return mapping

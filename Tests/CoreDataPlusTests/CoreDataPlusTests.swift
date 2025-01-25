@@ -1,22 +1,10 @@
-import XCTest
-@testable import CoreDataPlus
 #if canImport(CoreData)
 import CoreData
 #endif
-import Darwin
+@testable import CoreDataPlus
+import XCTest
 
 final class CoreDataPlusTests: XCTestCase {
-    
-    static var allTests: [(String, (CoreDataPlusTests) -> () throws -> ())] {
-        var tests = [(String, (CoreDataPlusTests) -> () throws -> ())]()
-        #if canImport(CoreData)
-        tests.append(("testModelHashes", testModelHashes))
-        tests.append(("testModel_1_0_Initialization", testModel_1_0_Initialization))
-        tests.append(("testModel_1_1_Initialization", testModel_1_1_Initialization))
-        tests.append(("testModelMigration_from_1_0_to_1_1", testModelMigration_from_1_0_to_1_1))
-        #endif
-        return tests
-    }
     
     private let fileManager: FileManager = .default
     
@@ -99,9 +87,9 @@ final class CoreDataPlusTests: XCTestCase {
         XCTAssertEqual(hashes["Book"]?.hexString, "f21d3d7908442f000d972aa3f45e4896af9fce38fe16fd58c7839be88df87651")
     }
     
-    func testModel_1_0_Initialization() throws {
+    func testModel_1_0_Initialization() async throws {
         let storeURL = StoreURL(currentDirectory: "Model_1_0")
-        let container: CatalogContainer<ManagedModel> = try .init(version: .v1_0, persistence: .store(storeURL), name: "ManagedModel")
+        let container = try await CatalogContainer<ManagedModel>(version: .v1_0, persistence: .store(storeURL), name: "ManagedModel")
         let context = container.persistentContainer.viewContext
         let author: AuthorV1_0 = context.make()
         author.id = UUID(uuidString: "ef71d564-cb1a-4a33-b55e-1d14c08cf329")!
@@ -112,13 +100,13 @@ final class CoreDataPlusTests: XCTestCase {
         book.isbn = "9780525520061"
         author.addToBooks(book)
         try context.save()
-        try container.checkpointAndClose()
+        try await container.checkpointAndClose()
         try storeURL.destroy()
     }
     
-    func testModel_1_1_Initialization() throws {
+    func testModel_1_1_Initialization() async throws {
         let storeURL = StoreURL(currentDirectory: "Model_1_1")
-        let container: CatalogContainer<ManagedModel> = try .init(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
+        let container = try await CatalogContainer<ManagedModel>(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
         let context = container.persistentContainer.viewContext
         let author: AuthorV1_1 = context.make()
         author.id = UUID(uuidString: "ef71d564-cb1a-4a33-b55e-1d14c08cf329")!
@@ -129,11 +117,11 @@ final class CoreDataPlusTests: XCTestCase {
         book.isbn = "9780525520061"
         author.addToAuthoredBooks(book)
         try context.save()
-        try container.checkpointAndClose()
+        try await container.checkpointAndClose()
         try storeURL.destroy()
     }
     
-    func testModelMigration_from_1_0_to_1_1() throws {
+    func testModelMigration_from_1_0_to_1_1() async throws {
         let authorId: UUID = try XCTUnwrap(UUID(uuidString: "b6994cc6-73f5-4eda-a879-6b43f8a219ed"))
         let bookId: UUID = try XCTUnwrap(UUID(uuidString: "c53c84c8-ea05-4517-b0b5-5eaf09d1514e"))
         
@@ -141,7 +129,7 @@ final class CoreDataPlusTests: XCTestCase {
         var container: CatalogContainer<ManagedModel>
         var context: NSManagedObjectContext
         
-        container = try .init(version: .v1_0, persistence: .store(storeURL), name: "ManagedModel")
+        container = try await CatalogContainer(version: .v1_0, persistence: .store(storeURL), name: "ManagedModel")
         context = container.persistentContainer.viewContext
         
         let garyTaubes: AuthorV1_0 = context.make()
@@ -156,9 +144,9 @@ final class CoreDataPlusTests: XCTestCase {
         garyTaubes.addToBooks(caseForKeto)
         
         try context.save()
-        try container.checkpointAndClose()
+        try await container.checkpointAndClose()
         
-        container = try .init(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel", silentMigration: false)
+        container = try await CatalogContainer(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel", silentMigration: false)
         context = container.persistentContainer.viewContext
         
         XCTAssertEqual(container.migrationSource, .v1_0)
@@ -173,13 +161,13 @@ final class CoreDataPlusTests: XCTestCase {
         XCTAssertEqual(book.title, "The Case for Keto")
         XCTAssertEqual(book.isbn, "9780525520061")
         
-        try container.checkpointAndClose()
+        try await container.checkpointAndClose()
         try storeURL.destroy()
     }
     
-    func testUsageAfterCheckpoint() throws {
+    func testUsageAfterCheckpoint() async throws {
         let storeURL = StoreURL(currentDirectory: "CheckpointTest")
-        let container: CatalogContainer<ManagedModel> = try .init(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
+        let container = try await CatalogContainer<ManagedModel>(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
         let context = container.persistentContainer.viewContext
         
         var author: AuthorV1_1 = context.make()
@@ -195,7 +183,7 @@ final class CoreDataPlusTests: XCTestCase {
         
         try context.save()
         
-        try container.checkpointAndContinue()
+        try await container.checkpointAndContinue()
         
         let id = author.objectID
         author = try XCTUnwrap(context.object(with: id) as? AuthorV1_1)
@@ -209,7 +197,7 @@ final class CoreDataPlusTests: XCTestCase {
         
         try context.save()
         
-        try container.checkpointAndClose()
+        try await container.checkpointAndClose()
         try storeURL.destroy()
     }
     #endif

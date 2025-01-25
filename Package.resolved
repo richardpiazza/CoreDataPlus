@@ -1,33 +1,6 @@
 {
   "pins" : [
     {
-      "identity" : "occurrence",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/richardpiazza/Occurrence.git",
-      "state" : {
-        "revision" : "01a27fbca874d48854ab156404fe8c360facc89b",
-        "version" : "0.7.2"
-      }
-    },
-    {
-      "identity" : "sqlite.swift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/stephencelis/SQLite.swift.git",
-      "state" : {
-        "revision" : "a95fc6df17d108bd99210db5e8a9bac90fe984b8",
-        "version" : "0.15.3"
-      }
-    },
-    {
-      "identity" : "statement",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/richardpiazza/Statement.git",
-      "state" : {
-        "revision" : "fc77679f1d34c75cf996bd09169efbc31ca93d7a",
-        "version" : "0.8.1"
-      }
-    },
-    {
       "identity" : "swift-log",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-log.git",

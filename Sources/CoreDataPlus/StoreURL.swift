@@ -5,7 +5,6 @@ import CoreData
 public struct StoreURL: RawRepresentable {
     public let rawValue: URL
     public let storeType = NSSQLiteStoreType
-    public var fileManager: FileManager = .default
     
     public init?(rawValue: URL) {
         guard rawValue.pathExtension.lowercased().hasSuffix(FileExtension.sqlite.rawValue) else {
@@ -19,7 +18,6 @@ public struct StoreURL: RawRepresentable {
         let directory = URL(fileURLWithPath: fileManager.currentDirectoryPath, isDirectory: true)
         let path = "\(resource).\(FileExtension.sqlite.rawValue)"
         rawValue = URL(fileURLWithPath: path, relativeTo: directory)
-        self.fileManager = fileManager
     }
     
     public init(applicationSupport resource: String, folder: String, fileManager: FileManager = .default) throws {
@@ -34,7 +32,12 @@ public struct StoreURL: RawRepresentable {
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
         let path = "\(resource).\(FileExtension.sqlite.rawValue)"
         rawValue = URL(fileURLWithPath: directory.appendingPathComponent(path).path)
-        self.fileManager = fileManager
+    }
+}
+
+extension StoreURL: CustomStringConvertible {
+    public var description: String {
+        "\(String(describing: storeType)) - \(rawValue)"
     }
 }
 
@@ -63,7 +66,7 @@ public extension StoreURL {
     }
     
     /// Removes the underlying SQL store and related files.
-    func destroy() throws {
+    func destroy(using fileManager: FileManager = .default) throws {
         if fileManager.fileExists(atPath: rawValue.path) {
             try fileManager.removeItem(at: rawValue)
         }

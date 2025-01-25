@@ -39,11 +39,22 @@ public struct Migrator<Catalog: ModelCatalog> {
         }
         
         guard let source = Catalog.versionCompatibleWith(metadata: metadata, configurationName: configurationName) else {
-            throw Logger.coreDataPlus.error("No Source Version", error: CoreDataPlusError.migrationSource(storeURL.rawValue.absoluteString))
+            Logger.coreDataPlus.error("No Source Version", metadata: [
+                "storeUrl": .stringConvertible(storeURL),
+                "configurationName": .string(configurationName),
+                "destination": .string(destination.id),
+            ])
+            throw CoreDataPlusError.migrationSource(storeURL.rawValue.absoluteString)
         }
         
         guard Catalog.pathExists(from: source, to: destination) else {
-            throw Logger.coreDataPlus.error("No Migration Path", error: CoreDataPlusError.migrationPath(source: source.id, destination: destination.id))
+            Logger.coreDataPlus.error("No Migration Path", metadata: [
+                "storeUrl": .stringConvertible(storeURL),
+                "configurationName": .string(configurationName),
+                "source": .string(source.id),
+                "destination": .string(destination.id),
+            ])
+            throw CoreDataPlusError.migrationPath(source: source.id, destination: destination.id)
         }
         
         let sourceModel = source.managedObjectModel
@@ -100,7 +111,11 @@ private extension Migrator {
         var current: Catalog.Version = from
         while let next = Catalog.versionAfter(current) {
             guard let mapping = next.mappingModel else {
-                throw Logger.coreDataPlus.error("Invalid Migration Mapping", error: CoreDataPlusError.migrationMapping(source: current.id, destination: next.id))
+                Logger.coreDataPlus.error("Invalid Migration Mapping", metadata: [
+                    "from": .string(from.id),
+                    "to": .string(to.id)
+                ])
+                throw CoreDataPlusError.migrationMapping(source: current.id, destination: next.id)
             }
             
             steps.append(

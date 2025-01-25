@@ -31,7 +31,7 @@ public class CatalogContainer<Catalog: ModelCatalog> {
         persistence: Persistence,
         name: String,
         silentMigration: Bool = true
-    ) throws {
+    ) async throws {
         self.version = version
         self.persistence = persistence
         self.name = name
@@ -72,16 +72,8 @@ public class CatalogContainer<Catalog: ModelCatalog> {
             description.type = NSInMemoryStoreType
         }
         
-        var loadError: Error? = nil
-        
         persistentContainer.persistentStoreDescriptions = [description]
-        persistentContainer.loadPersistentStores { (_, error) in
-            loadError = error
-        }
-        
-        if let error = loadError {
-            throw error
-        }
+        try await persistentContainer.loadPersistentStores()
         
         persistentContainer.viewContext.automaticallyMergesChangesFromParent = true
         persistentContainer.viewContext.mergePolicy = NSMergePolicy(merge: .mergeByPropertyObjectTrumpMergePolicyType)
@@ -98,19 +90,19 @@ public extension CatalogContainer {
     /// Causes the write-ahead log to be integrated into the primary sqlite table.
     ///
     /// **WARNING**: The persistent container stores will be re-added, and all existing object references will become invalid.
-    func checkpointAndContinue() throws {
-        try checkpoint(reopen: true)
+    func checkpointAndContinue() async throws {
+        try await checkpoint(reopen: true)
         persistentContainer.viewContext.refreshAllObjects()
     }
     
     /// Causes the write-ahead log to be integrated into the primary sqlite table.
-    func checkpointAndClose() throws {
-        try checkpoint(reopen: false)
+    func checkpointAndClose() async throws {
+        try await checkpoint(reopen: false)
     }
 }
 
 private extension CatalogContainer {
-    func checkpoint(reopen: Bool) throws {
+    func checkpoint(reopen: Bool) async throws {
         guard case .store(let storeURL) = persistence else {
             return
         }
@@ -122,7 +114,9 @@ private extension CatalogContainer {
         let coordinator = persistentContainer.persistentStoreCoordinator
         let descriptions = persistentContainer.persistentStoreDescriptions
         let stores = coordinator.persistentStores
-        try stores.forEach { try coordinator.remove($0) }
+        for store in stores {
+            try coordinator.remove(store)
+        }
         
         try NSPersistentStoreCoordinator.checkpoint(storeAtURL: storeURL.rawValue, model: version.managedObjectModel, name: name)
         
@@ -130,16 +124,8 @@ private extension CatalogContainer {
             return
         }
         
-        try descriptions.forEach {
-            var thrown: Error?
-            coordinator.addPersistentStore(with: $0) { (_, error) in
-                if let e = error {
-                    thrown = e
-                }
-            }
-            if let error = thrown {
-                throw error
-            }
+        for description in descriptions {
+            try await coordinator.addPersistentStore(with: description)
         }
     }
 }

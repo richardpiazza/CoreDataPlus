@@ -1,9 +1,8 @@
-import XCTest
-@testable import CoreDataPlus
 #if canImport(CoreData)
 import CoreData
 #endif
-import Darwin
+@testable import CoreDataPlus
+import XCTest
 
 final class CoreDataPlusTests: XCTestCase {
     

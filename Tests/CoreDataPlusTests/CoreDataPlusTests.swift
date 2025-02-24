@@ -89,7 +89,7 @@ final class CoreDataPlusTests: XCTestCase {
     
     func testModel_1_0_Initialization() async throws {
         let storeURL = StoreURL(currentDirectory: "Model_1_0")
-        let container = try await CatalogContainer<ManagedModel>(version: .v1_0, persistence: .store(storeURL), name: "ManagedModel")
+        let container = try CatalogContainer<ManagedModel>(version: .v1_0, persistence: .store(storeURL), name: "ManagedModel")
         let context = container.persistentContainer.viewContext
         let author: AuthorV1_0 = context.make()
         author.id = UUID(uuidString: "ef71d564-cb1a-4a33-b55e-1d14c08cf329")!
@@ -106,7 +106,7 @@ final class CoreDataPlusTests: XCTestCase {
     
     func testModel_1_1_Initialization() async throws {
         let storeURL = StoreURL(currentDirectory: "Model_1_1")
-        let container = try await CatalogContainer<ManagedModel>(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
+        let container = try CatalogContainer<ManagedModel>(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
         let context = container.persistentContainer.viewContext
         let author: AuthorV1_1 = context.make()
         author.id = UUID(uuidString: "ef71d564-cb1a-4a33-b55e-1d14c08cf329")!
@@ -129,7 +129,7 @@ final class CoreDataPlusTests: XCTestCase {
         var container: CatalogContainer<ManagedModel>
         var context: NSManagedObjectContext
         
-        container = try await CatalogContainer(version: .v1_0, persistence: .store(storeURL), name: "ManagedModel")
+        container = try CatalogContainer(version: .v1_0, persistence: .store(storeURL), name: "ManagedModel")
         context = container.persistentContainer.viewContext
         
         let garyTaubes: AuthorV1_0 = context.make()
@@ -146,7 +146,7 @@ final class CoreDataPlusTests: XCTestCase {
         try context.save()
         try await container.checkpointAndClose()
         
-        container = try await CatalogContainer(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel", silentMigration: false)
+        container = try CatalogContainer(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel", silentMigration: false)
         context = container.persistentContainer.viewContext
         
         XCTAssertEqual(container.migrationSource, .v1_0)
@@ -167,7 +167,7 @@ final class CoreDataPlusTests: XCTestCase {
     
     func testUsageAfterCheckpoint() async throws {
         let storeURL = StoreURL(currentDirectory: "CheckpointTest")
-        let container = try await CatalogContainer<ManagedModel>(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
+        let container = try CatalogContainer<ManagedModel>(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel")
         let context = container.persistentContainer.viewContext
         
         var author: AuthorV1_1 = context.make()

@@ -31,7 +31,7 @@ public class CatalogContainer<Catalog: ModelCatalog> {
         persistence: Persistence,
         name: String,
         silentMigration: Bool = true
-    ) async throws {
+    ) throws {
         self.version = version
         self.persistence = persistence
         self.name = name
@@ -73,7 +73,17 @@ public class CatalogContainer<Catalog: ModelCatalog> {
         }
         
         persistentContainer.persistentStoreDescriptions = [description]
-        try await persistentContainer.loadPersistentStores()
+        
+        var loadError: Error? = nil
+        // `loadPersistentStores` seems like it should be an asyncronous call, but…
+        // see `NSPersistentStoreDescription.shouldAddStoreAsynchronously`.
+        persistentContainer.loadPersistentStores { (_, error) in
+            loadError = error
+        }
+        
+        if let error = loadError {
+            throw error
+        }
         
         persistentContainer.viewContext.automaticallyMergesChangesFromParent = true
         persistentContainer.viewContext.mergePolicy = NSMergePolicy(merge: .mergeByPropertyObjectTrumpMergePolicyType)

@@ -87,40 +87,16 @@ public extension NSManagedObjectContext {
     ///   - operation: Function block that should be performed on the context.
     ///   - saving: Indicates if a save operation should be attempted after the operation.
     func performSynchronously(_ operation: (_ context: NSManagedObjectContext) throws -> Void, saving: Bool = true) throws {
-        var operationError: Error?
-        
-        performAndWait {
-            do {
-                try operation(self)
-            } catch {
-                operationError = error
-            }
-        }
-        
-        if let error = operationError {
-            throw error
+        try performAndWait {
+            try operation(self)
         }
         
         guard saving else {
             return
         }
         
-        var savingError: Error?
-        
-        performAndWait {
-            guard hasChanges else {
-                return
-            }
-            
-            do {
-                try save()
-            } catch {
-                savingError = error
-            }
-        }
-        
-        if let error = savingError {
-            throw error
+        try performAndWait {
+            try save()
         }
     }
 }

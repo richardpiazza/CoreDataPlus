@@ -9,7 +9,9 @@ public extension NSManagedObjectContext {
     /// have difficulties disambiguating the references. Using `NSEntityDescription.insertNewObject(forEntityName:into:)`
     /// does not have the same problem.
     func make<T>(entityName: String = T.entityName) -> T where T: NSManagedObject {
-        return NSEntityDescription.insertNewObject(forEntityName: entityName, into: self) as! T
+        performAndWait {
+            NSEntityDescription.insertNewObject(forEntityName: entityName, into: self) as! T
+        }
     }
     
     /// Synchronously performs a fetch request on the context.
@@ -18,22 +20,9 @@ public extension NSManagedObjectContext {
     ///   - request: The typed `NSFetchRequest` to perform
     /// - returns: A collection of fetched entities (or empty)
     func fetchSynchronously<T>(_ request: NSFetchRequest<T>) throws -> [T] {
-        var results: [T]?
-        var fetchError: Error?
-        
-        performAndWait {
-            do {
-                results = try fetch(request)
-            } catch {
-                fetchError = error
-            }
+        try performAndWait {
+            try fetch(request)
         }
-        
-        if let error = fetchError {
-            throw error
-        }
-        
-        return results ?? []
     }
     
     /// Synchronously performs a fetch request on the context and maps the results using the provided function.
@@ -43,28 +32,10 @@ public extension NSManagedObjectContext {
     ///   - mapping: Function that maps the request type to the output type.
     /// - returns: A collection of entities mapped to a requested type.
     func fetchSynchronously<T, U>(_ request: NSFetchRequest<T>, mapping: (T) -> U) throws -> [U] {
-        var fetchResults: [T]?
-        var fetchError: Error?
-        
-        performAndWait {
-            do {
-                fetchResults = try fetch(request)
-            } catch {
-                fetchError = error
-            }
+        try performAndWait {
+            let fetchResults = try fetch(request)
+            return fetchResults.map(mapping)
         }
-        
-        if let error = fetchError {
-            throw error
-        }
-        
-        var results: [U]?
-        
-        performAndWait {
-            results = (fetchResults ?? []).map(mapping)
-        }
-        
-        return results ?? []
     }
     
     /// Synchronously maps a context object.
@@ -74,11 +45,9 @@ public extension NSManagedObjectContext {
     ///   - transform: Function that maps the `value` to the output type.
     /// - returns: The mapped result.
     func mapSynchronously<T, U>(_ value: T, _ transform: (T) -> U) -> U {
-        var result: U?
         performAndWait {
-            result = transform(value)
+            transform(value)
         }
-        return result!
     }
     
     /// Synchronously performs an operation on the context and optionally saves.
@@ -89,14 +58,9 @@ public extension NSManagedObjectContext {
     func performSynchronously(_ operation: (_ context: NSManagedObjectContext) throws -> Void, saving: Bool = true) throws {
         try performAndWait {
             try operation(self)
-        }
-        
-        guard saving else {
-            return
-        }
-        
-        try performAndWait {
-            try save()
+            if saving {
+                try save()
+            }
         }
     }
 }

@@ -1,0 +1,28 @@
+{
+  "configurations" : [
+    {
+      "id" : "0619A76F-5C10-4322-936A-339A8F9AC9C4",
+      "name" : "Test Scheme Action",
+      "options" : {
+        "commandLineArgumentEntries" : [
+          {
+            "argument" : "-com.apple.CoreData.ConcurrencyDebug 1"
+          }
+        ]
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "CoreDataPlusTests",
+        "name" : "CoreDataPlusTests"
+      }
+    }
+  ],
+  "version" : 1
+}

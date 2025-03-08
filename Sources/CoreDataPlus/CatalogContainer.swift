@@ -102,7 +102,10 @@ public extension CatalogContainer {
     /// **WARNING**: The persistent container stores will be re-added, and all existing object references will become invalid.
     func checkpointAndContinue() async throws {
         try await checkpoint(reopen: true)
-        persistentContainer.viewContext.refreshAllObjects()
+        let context = persistentContainer.viewContext
+        context.performAndWait {
+            context.refreshAllObjects()
+        }
     }
     
     /// Causes the write-ahead log to be integrated into the primary sqlite table.
@@ -117,8 +120,11 @@ private extension CatalogContainer {
             return
         }
         
-        if persistentContainer.viewContext.hasChanges {
-            try persistentContainer.viewContext.save()
+        let context = persistentContainer.viewContext
+        try context.performAndWait {
+            if context.hasChanges {
+                try context.save()
+            }
         }
         
         let coordinator = persistentContainer.persistentStoreCoordinator

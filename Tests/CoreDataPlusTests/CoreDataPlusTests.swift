@@ -101,7 +101,7 @@ final class CoreDataPlusTests: XCTestCase {
             author.addToBooks(book)
             try context.save()
         }
-        try await container.checkpointAndClose()
+        try container.checkpointAndClose()
         try storeURL.destroy()
     }
     
@@ -119,7 +119,7 @@ final class CoreDataPlusTests: XCTestCase {
             author.addToAuthoredBooks(book)
             try context.save()
         }
-        try await container.checkpointAndClose()
+        try container.checkpointAndClose()
         try storeURL.destroy()
     }
     
@@ -145,7 +145,7 @@ final class CoreDataPlusTests: XCTestCase {
             
             try context.save()
         }
-        try await container.checkpointAndClose()
+        try container.checkpointAndClose()
         
         container = try CatalogContainer(version: .v1_1, persistence: .store(storeURL), name: "ManagedModel", silentMigration: false)
         let context = container.persistentContainer.viewContext
@@ -165,7 +165,63 @@ final class CoreDataPlusTests: XCTestCase {
             XCTAssertEqual(book.isbn, "9780525520061")
         }
         
-        try await container.checkpointAndClose()
+        try container.checkpointAndClose()
+        try storeURL.destroy()
+    }
+    
+    func testPostSchemaMigration() throws {
+        let authorId: UUID = try XCTUnwrap(UUID(uuidString: "b6994cc6-73f5-4eda-a879-6b43f8a219ed"))
+        let bookId: UUID = try XCTUnwrap(UUID(uuidString: "c53c84c8-ea05-4517-b0b5-5eaf09d1514e"))
+        
+        let storeURL = StoreURL(currentDirectory: "ManagedModel")
+        let persistence: Persistence = .store(storeURL)
+        
+        var container: CatalogContainer<ManagedModel>
+        container = try CatalogContainer(version: .v1_0, persistence: persistence, name: "ManagedModel")
+        try container.checkpointAndClose()
+        
+        container = try CatalogContainer(
+            version: .v1_1,
+            persistence: persistence,
+            name: "ManagedModel"
+        ) { (source, destination, context) in
+            switch (source, destination) {
+            case (.v1_0, .v1_1):
+                try context.performAndWait {
+                    let garyTaubes: AuthorV1_1 = context.make()
+                    garyTaubes.id = authorId
+                    garyTaubes.name = "Gary Taubes"
+                    
+                    let caseForKeto: BookV1_1 = context.make()
+                    caseForKeto.id = bookId
+                    caseForKeto.title = "The Case for Keto"
+                    caseForKeto.isbn = "9780525520061"
+                    
+                    garyTaubes.addToAuthoredBooks(caseForKeto)
+                    
+                    try context.save()
+                }
+            default:
+                break
+            }
+        }
+        
+        let context = container.persistentContainer.viewContext
+        
+        let fetch: NSFetchRequest<AuthorV1_1> = AuthorV1_1.fetchRequest()
+        fetch.predicate = NSPredicate(format: "%K = %@", #keyPath(AuthorV1_1.id), authorId.uuidString)
+        
+        try context.performAndWait {
+            let _author = try context.fetch(fetch).first
+            let author = try XCTUnwrap(_author)
+            XCTAssertEqual(author.name, "Gary Taubes")
+            
+            let book = try XCTUnwrap((author.authoredBooks as? Set<BookV1_1>)?.first(where: { $0.id == bookId }))
+            XCTAssertEqual(book.title, "The Case for Keto")
+            XCTAssertEqual(book.isbn, "9780525520061")
+        }
+        
+        try container.checkpointAndClose()
         try storeURL.destroy()
     }
     
@@ -189,7 +245,7 @@ final class CoreDataPlusTests: XCTestCase {
             return author.objectID
         }
         
-        try await container.checkpointAndContinue()
+        try container.checkpointAndContinue()
         
         try await container.persistentContainer.performBackgroundTask { context in
             let author = try XCTUnwrap(context.object(with: objectId) as? AuthorV1_1)
@@ -204,7 +260,7 @@ final class CoreDataPlusTests: XCTestCase {
             try context.save()
         }
         
-        try await container.checkpointAndClose()
+        try container.checkpointAndClose()
         try storeURL.destroy()
     }
     #endif

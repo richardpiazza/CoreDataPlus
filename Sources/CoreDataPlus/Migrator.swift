@@ -13,10 +13,23 @@ public struct Migrator<Catalog: ModelCatalog> {
         case mapping(source: Catalog.Version, destination: Catalog.Version)
     }
     
+    /// Function executed after a store has been migrated from one version to the next,
+    /// but before any other steps. This allows for any data handling to be performed
+    /// for that specific target version.
+    public typealias PostSchemaMigrationHandler = (_ source: Catalog.Version, _ destination: Catalog.Version, _ context: NSManagedObjectContext) throws -> Void
+    
     struct Step {
         let source: Catalog.Version
         let destination: Catalog.Version
         let mapping: NSMappingModel
+    }
+    
+    public let postSchemaMigrationHandler: PostSchemaMigrationHandler?
+    
+    public init(
+        postSchemaMigrationHandler: PostSchemaMigrationHandler? = nil
+    ) {
+        self.postSchemaMigrationHandler = postSchemaMigrationHandler
     }
     
     @discardableResult
@@ -81,6 +94,22 @@ public struct Migrator<Catalog: ModelCatalog> {
                 destinationType: storeType,
                 destinationOptions: nil
             )
+            
+            if let postSchemaMigrationHandler {
+                guard let tempStoreUrl = StoreURL(rawValue: tempURL) else {
+                    continue
+                }
+                
+                let container = try NSPersistentContainer(
+                    name: configurationName,
+                    version: step.destination,
+                    persistence: .store(tempStoreUrl)
+                )
+                let backgroundContext = container.newBackgroundContext()
+                try postSchemaMigrationHandler(step.source, step.destination, backgroundContext)
+                try container.checkpointAndClose()
+            }
+            
             try coordinator.destroyPersistentStore(
                 at: storeURL.rawValue,
                 ofType: storeType,

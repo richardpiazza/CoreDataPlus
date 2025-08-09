@@ -3,7 +3,7 @@ import Foundation
 import CoreData
 
 public class CatalogContainer<Catalog: ModelCatalog> {
-    
+
     public let persistentContainer: NSPersistentContainer
     /// Model version used by the `Container`
     public let version: Catalog.Version
@@ -13,7 +13,7 @@ public class CatalogContainer<Catalog: ModelCatalog> {
     public let name: String
     /// When a migration occurs, the source version will be listed here.
     public let migrationSource: Catalog.Version?
-    
+
     /// Initializes the `NSPersistentContainer` with a specified `Model` version.
     ///
     /// If an existing store exists at the default URL, a _heavyweight_ migration will be performed. If
@@ -37,7 +37,7 @@ public class CatalogContainer<Catalog: ModelCatalog> {
         self.version = version
         self.persistence = persistence
         self.name = name
-        
+
         if case let .store(storeURL) = persistence {
             let migrator = Migrator<Catalog>(postSchemaMigrationHandler: postSchemaMigration)
             do {
@@ -60,7 +60,7 @@ public class CatalogContainer<Catalog: ModelCatalog> {
         } else {
             migrationSource = nil
         }
-        
+
         persistentContainer = try NSPersistentContainer(
             name: name,
             version: version,
@@ -74,14 +74,14 @@ public extension CatalogContainer {
     var path: String? {
         persistentContainer.persistentStoreCoordinator.persistentStores.first?.url?.path
     }
-    
+
     /// Causes the write-ahead log to be integrated into the primary sqlite table.
     ///
     /// **WARNING**: The persistent container stores will be re-added, and all existing object references will become invalid.
     func checkpointAndContinue() throws {
         try persistentContainer.checkpointAndContinue()
     }
-    
+
     /// Causes the write-ahead log to be integrated into the primary sqlite table.
     func checkpointAndClose() throws {
         try persistentContainer.checkpointAndClose()

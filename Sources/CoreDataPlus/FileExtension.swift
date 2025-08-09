@@ -8,7 +8,7 @@ enum FileExtension: String {
     /// A Core Data `NSMappingModel`.
     case mappingModel = "xcmappingmodel"
     /// Extension for Core Data SQLite _database_ file
-    case sqlite = "sqlite"
+    case sqlite
     /// Extension for Core Data SQLite _shared memory_ file
     case sqliteSharedMemory = "sqlite-shm"
     /// Extension for Core Data SQLite _write-ahead-log_ file

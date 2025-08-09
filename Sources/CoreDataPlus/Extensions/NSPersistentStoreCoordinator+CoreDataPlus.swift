@@ -18,7 +18,7 @@ public extension NSPersistentStoreCoordinator {
             }
         }
     }
-    
+
     /// Causes the write-ahead log to be integrated into the primary sqlite table.
     static func checkpoint(storeAtURL url: URL, model: NSManagedObjectModel, name: String) throws {
         let coordinator = NSPersistentStoreCoordinator(managedObjectModel: model)

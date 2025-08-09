@@ -10,13 +10,13 @@ let package = Package(
         .macCatalyst(.v15),
         .iOS(.v15),
         .tvOS(.v15),
-        .watchOS(.v8)
+        .watchOS(.v8),
     ],
     products: [
         .library(
             name: "CoreDataPlus",
             targets: [
-                "CoreDataPlus"
+                "CoreDataPlus",
             ]
         ),
     ],
@@ -33,7 +33,7 @@ let package = Package(
         .testTarget(
             name: "CoreDataPlusTests",
             dependencies: [
-                "CoreDataPlus"
+                "CoreDataPlus",
             ],
             resources: [
                 .process("Resources"),

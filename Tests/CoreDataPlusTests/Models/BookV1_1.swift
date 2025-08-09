@@ -3,39 +3,36 @@ import Foundation
 import CoreData
 
 @objc(BookV1_1)
-public class BookV1_1: NSManagedObject {
+public class BookV1_1: NSManagedObject {}
 
-}
+public extension BookV1_1 {
 
-extension BookV1_1 {
-
-    @nonobjc public class func fetchRequest() -> NSFetchRequest<BookV1_1> {
-        return NSFetchRequest<BookV1_1>(entityName: "Book")
+    @nonobjc class func fetchRequest() -> NSFetchRequest<BookV1_1> {
+        NSFetchRequest<BookV1_1>(entityName: "Book")
     }
 
-    @NSManaged public var id: UUID?
-    @NSManaged public var isbn: String?
-    @NSManaged public var published: Date?
-    @NSManaged public var title: String?
-    @NSManaged public var author: AuthorV1_1?
-    @NSManaged public var coAuthors: NSSet?
-
+    @NSManaged var id: UUID?
+    @NSManaged var isbn: String?
+    @NSManaged var published: Date?
+    @NSManaged var title: String?
+    @NSManaged var author: AuthorV1_1?
+    @NSManaged var coAuthors: NSSet?
 }
 
 // MARK: Generated accessors for coAuthors
-extension BookV1_1 {
+
+public extension BookV1_1 {
 
     @objc(addCoAuthorsObject:)
-    @NSManaged public func addToCoAuthors(_ value: AuthorV1_1)
+    @NSManaged func addToCoAuthors(_ value: AuthorV1_1)
 
     @objc(removeCoAuthorsObject:)
-    @NSManaged public func removeFromCoAuthors(_ value: AuthorV1_1)
+    @NSManaged func removeFromCoAuthors(_ value: AuthorV1_1)
 
     @objc(addCoAuthors:)
-    @NSManaged public func addToCoAuthors(_ values: NSSet)
+    @NSManaged func addToCoAuthors(_ values: NSSet)
 
     @objc(removeCoAuthors:)
-    @NSManaged public func removeFromCoAuthors(_ values: NSSet)
-
+    @NSManaged func removeFromCoAuthors(_ values: NSSet)
 }
 #endif

@@ -4,9 +4,6 @@ import Logging
 import CoreData
 
 public extension Bundle {
-    @available(*, deprecated, renamed: "CoreDataPlusError")
-    typealias ResourceError = CoreDataPlusError
-    
     /// Retrieve a `NSManagedObjectModel` from the bundle.
     ///
     /// When correctly recognized and processed as a resource, `.xcdatamodeld` will be automatically compiled and
@@ -21,10 +18,10 @@ public extension Bundle {
     ///   - subdirectory: Path subdirectory where the resource may be found.
     func managedObjectModel(forResource resource: String, subdirectory: String? = nil) throws -> NSManagedObjectModel {
         let url: URL
-        
+
         let dataModel = FileExtension.compiledDataModel.rawValue
         let dataModelPrecompiled = "\(FileExtension.compiledDataModel.rawValue)\(ResourceSuffix.precompiled.rawValue)"
-        
+
         if let _url = self.url(forResource: resource, withExtension: dataModel) {
             url = _url
         } else if let _url = self.url(forResource: resource, withExtension: dataModelPrecompiled) {
@@ -37,21 +34,21 @@ public extension Bundle {
             Logger.coreDataPlus.error("Resource Not Found", metadata: [
                 "resource": .string(resource),
                 "subdirectory": .string(subdirectory ?? ""),
-                "bundlePath" : .string(bundlePath),
+                "bundlePath": .string(bundlePath),
             ])
             throw CoreDataPlusError.resourceNotFound(resource, bundlePath: bundlePath)
         }
-        
+
         guard let model = NSManagedObjectModel(contentsOf: url) else {
             Logger.coreDataPlus.error("Resource Corrupted", metadata: [
                 "url": .stringConvertible(url),
             ])
             throw CoreDataPlusError.resourceContents("NSManagedObjectModel", path: url.path)
         }
-        
+
         return model
     }
-    
+
     /// Retrieve a `NSMappingModel` from the bundle.
     ///
     /// When correctly recognized and processed as a resource, `.xcmappingmodel` will be automatically compiled and
@@ -66,10 +63,10 @@ public extension Bundle {
     ///   - subdirectory: Path subdirectory where the resource may be found.
     func mappingModel(forResource resource: String, subdirectory: String? = nil) throws -> NSMappingModel {
         let url: URL
-        
+
         let mappingModel = FileExtension.compiledMappingModel.rawValue
         let mappingModelPrecompiled = "\(FileExtension.compiledMappingModel.rawValue)\(ResourceSuffix.precompiled.rawValue)"
-        
+
         if let _url = self.url(forResource: resource, withExtension: mappingModel) {
             url = _url
         } else if let _url = self.url(forResource: resource, withExtension: mappingModelPrecompiled) {
@@ -82,18 +79,18 @@ public extension Bundle {
             Logger.coreDataPlus.error("Resource Not Found", metadata: [
                 "resource": .string(resource),
                 "subdirectory": .string(subdirectory ?? ""),
-                "bundlePath" : .string(bundlePath),
+                "bundlePath": .string(bundlePath),
             ])
             throw CoreDataPlusError.resourceNotFound(resource, bundlePath: bundlePath)
         }
-        
+
         guard let mapping = NSMappingModel(contentsOf: url) else {
             Logger.coreDataPlus.error("Resource Corrupted", metadata: [
                 "url": .stringConvertible(url),
             ])
             throw CoreDataPlusError.resourceContents("NSMappingModel", path: url.path)
         }
-        
+
         return mapping
     }
 }

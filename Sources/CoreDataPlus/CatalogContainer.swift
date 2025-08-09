@@ -22,22 +22,24 @@ public class CatalogContainer<Catalog: ModelCatalog> {
     /// * `CoreDataPlusError.migrationPath`
     ///
     /// - parameters:
-    ///   - version: The `ModelVersion` with which to initialize (or migrate) the container.
-    ///   - persistence: Controls the underlying storage mechanism.
+    ///   - version: The `Catalog.Version` with which to initialize (or migrate) the container.
+    ///   - persistence: Specify the underlying storage mechanism.
     ///   - name: The name used by the persistent container.
     ///   - silentMigration: When enabled, some migration errors will fall back to a clean state.
+    ///   - postSchemaMigration: Optional handler to modify data once a schema version has been applied.
     public init(
         version: Catalog.Version,
         persistence: Persistence,
         name: String,
-        silentMigration: Bool = true
+        silentMigration: Bool = true,
+        postSchemaMigration: Migrator<Catalog>.PostSchemaMigrationHandler? = nil
     ) throws {
         self.version = version
         self.persistence = persistence
         self.name = name
         
         if case let .store(storeURL) = persistence {
-            let migrator = Migrator<Catalog>()
+            let migrator = Migrator<Catalog>(postSchemaMigrationHandler: postSchemaMigration)
             do {
                 migrationSource = try migrator.migrateStore(at: storeURL, to: version, configurationName: name)
             } catch let error as CoreDataPlusError {
@@ -59,35 +61,11 @@ public class CatalogContainer<Catalog: ModelCatalog> {
             migrationSource = nil
         }
         
-        persistentContainer = NSPersistentContainer(name: name, managedObjectModel: version.managedObjectModel)
-        
-        let description = NSPersistentStoreDescription()
-        description.shouldInferMappingModelAutomatically = false
-        description.shouldMigrateStoreAutomatically = false
-        switch persistence {
-        case .store(let storeURL):
-            description.type = storeURL.storeType
-            description.url = storeURL.rawValue
-        case .memory:
-            description.type = NSInMemoryStoreType
-        }
-        
-        persistentContainer.persistentStoreDescriptions = [description]
-        
-        var loadError: Error? = nil
-        // `loadPersistentStores` seems like it should be an asyncronous call, but…
-        // see `NSPersistentStoreDescription.shouldAddStoreAsynchronously`.
-        persistentContainer.loadPersistentStores { (_, error) in
-            loadError = error
-        }
-        
-        if let error = loadError {
-            throw error
-        }
-        
-        persistentContainer.viewContext.automaticallyMergesChangesFromParent = true
-        persistentContainer.viewContext.mergePolicy = NSMergePolicy(merge: .mergeByPropertyObjectTrumpMergePolicyType)
-        persistentContainer.viewContext.undoManager = nil
+        persistentContainer = try NSPersistentContainer(
+            name: name,
+            version: version,
+            persistence: persistence
+        )
     }
 }
 
@@ -100,49 +78,13 @@ public extension CatalogContainer {
     /// Causes the write-ahead log to be integrated into the primary sqlite table.
     ///
     /// **WARNING**: The persistent container stores will be re-added, and all existing object references will become invalid.
-    func checkpointAndContinue() async throws {
-        try await checkpoint(reopen: true)
-        let context = persistentContainer.viewContext
-        context.performAndWait {
-            context.refreshAllObjects()
-        }
+    func checkpointAndContinue() throws {
+        try persistentContainer.checkpointAndContinue()
     }
     
     /// Causes the write-ahead log to be integrated into the primary sqlite table.
-    func checkpointAndClose() async throws {
-        try await checkpoint(reopen: false)
-    }
-}
-
-private extension CatalogContainer {
-    func checkpoint(reopen: Bool) async throws {
-        guard case .store(let storeURL) = persistence else {
-            return
-        }
-        
-        let context = persistentContainer.viewContext
-        try context.performAndWait {
-            if context.hasChanges {
-                try context.save()
-            }
-        }
-        
-        let coordinator = persistentContainer.persistentStoreCoordinator
-        let descriptions = persistentContainer.persistentStoreDescriptions
-        let stores = coordinator.persistentStores
-        for store in stores {
-            try coordinator.remove(store)
-        }
-        
-        try NSPersistentStoreCoordinator.checkpoint(storeAtURL: storeURL.rawValue, model: version.managedObjectModel, name: name)
-        
-        guard reopen else {
-            return
-        }
-        
-        for description in descriptions {
-            try await coordinator.addPersistentStore(with: description)
-        }
+    func checkpointAndClose() throws {
+        try persistentContainer.checkpointAndClose()
     }
 }
 #endif

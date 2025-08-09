@@ -13,7 +13,7 @@ public extension NSManagedObjectContext {
             NSEntityDescription.insertNewObject(forEntityName: entityName, into: self) as! T
         }
     }
-    
+
     /// Synchronously performs a fetch request on the context.
     ///
     /// - parameters:
@@ -24,7 +24,7 @@ public extension NSManagedObjectContext {
             try fetch(request)
         }
     }
-    
+
     /// Synchronously performs a fetch request on the context and maps the results using the provided function.
     ///
     /// - parameters:
@@ -37,7 +37,7 @@ public extension NSManagedObjectContext {
             return fetchResults.map(mapping)
         }
     }
-    
+
     /// Synchronously maps a context object.
     ///
     /// - parameters:
@@ -49,7 +49,7 @@ public extension NSManagedObjectContext {
             transform(value)
         }
     }
-    
+
     /// Synchronously performs an operation on the context and optionally saves.
     ///
     /// - parameters:

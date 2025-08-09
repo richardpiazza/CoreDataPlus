@@ -5,21 +5,21 @@ import CoreData
 public struct StoreURL: RawRepresentable {
     public let rawValue: URL
     public let storeType = NSSQLiteStoreType
-    
+
     public init?(rawValue: URL) {
         guard rawValue.pathExtension.lowercased().hasSuffix(FileExtension.sqlite.rawValue) else {
             return nil
         }
-        
+
         self.rawValue = rawValue
     }
-    
+
     public init(currentDirectory resource: String, fileManager: FileManager = .default) {
         let directory = URL(fileURLWithPath: fileManager.currentDirectoryPath, isDirectory: true)
         let path = "\(resource).\(FileExtension.sqlite.rawValue)"
         rawValue = URL(fileURLWithPath: path, relativeTo: directory)
     }
-    
+
     public init(applicationSupport resource: String, folder: String, fileManager: FileManager = .default) throws {
         let root: URL
         #if os(tvOS)
@@ -27,7 +27,7 @@ public struct StoreURL: RawRepresentable {
         #else
         root = try fileManager.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         #endif
-        
+
         let directory = root.appendingPathComponent(folder, isDirectory: true)
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
         let path = "\(resource).\(FileExtension.sqlite.rawValue)"
@@ -46,12 +46,12 @@ public extension StoreURL {
     var shmURL: URL {
         rawValue.deletingPathExtension().appendingPathExtension(FileExtension.sqliteSharedMemory.rawValue)
     }
-    
+
     /// The sql store _write-ahead-log_ url.
     var walURL: URL {
         rawValue.deletingPathExtension().appendingPathExtension(FileExtension.sqliteWriteAheadLog.rawValue)
     }
-    
+
     /// The current URL with the '_temp" suffix.
     var temporaryStoreURL: StoreURL {
         let name = rawValue.deletingPathExtension().lastPathComponent
@@ -64,7 +64,7 @@ public extension StoreURL {
         }
         return storeURL
     }
-    
+
     /// Removes the underlying SQL store and related files.
     func destroy(using fileManager: FileManager = .default) throws {
         if fileManager.fileExists(atPath: rawValue.path) {

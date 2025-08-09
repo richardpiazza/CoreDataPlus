@@ -3,21 +3,18 @@ import Foundation
 import CoreData
 
 @objc(BookV1_0)
-public class BookV1_0: NSManagedObject {
+public class BookV1_0: NSManagedObject {}
 
-}
+public extension BookV1_0 {
 
-extension BookV1_0 {
-
-    @nonobjc public class func fetchRequest() -> NSFetchRequest<BookV1_0> {
-        return NSFetchRequest<BookV1_0>(entityName: "Book")
+    @nonobjc class func fetchRequest() -> NSFetchRequest<BookV1_0> {
+        NSFetchRequest<BookV1_0>(entityName: "Book")
     }
 
-    @NSManaged public var id: UUID?
-    @NSManaged public var isbn: String?
-    @NSManaged public var published: Date?
-    @NSManaged public var title: String?
-    @NSManaged public var author: AuthorV1_0?
-
+    @NSManaged var id: UUID?
+    @NSManaged var isbn: String?
+    @NSManaged var published: Date?
+    @NSManaged var title: String?
+    @NSManaged var author: AuthorV1_0?
 }
 #endif

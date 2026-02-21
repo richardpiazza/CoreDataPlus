@@ -11,6 +11,7 @@ let package = Package(
         .iOS(.v15),
         .tvOS(.v15),
         .watchOS(.v8),
+        .visionOS(.v1),
     ],
     products: [
         .library(
@@ -21,7 +22,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.6.2"),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.9.1"),
     ],
     targets: [
         .target(

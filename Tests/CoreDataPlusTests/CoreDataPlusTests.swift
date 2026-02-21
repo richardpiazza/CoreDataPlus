@@ -66,7 +66,7 @@ final class CoreDataPlusTests: XCTestCase {
         }
     }
 
-    func testModelHashes() throws {
+    func testModelHashes() {
         var managedModel: ManagedModel
         var objectModel: NSManagedObjectModel
         var hashes: [String: Data]

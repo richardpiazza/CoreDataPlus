@@ -8,7 +8,7 @@ public extension NSManagedObjectContext {
     /// When initializing multiple models with duplicate entities, the standard `NSManagedObject.init(context:)` will
     /// have difficulties disambiguating the references. Using `NSEntityDescription.insertNewObject(forEntityName:into:)`
     /// does not have the same problem.
-    func make<T>(entityName: String = T.entityName) -> T where T: NSManagedObject {
+    func make<T: NSManagedObject>(entityName: String = T.entityName) -> T {
         performAndWait {
             NSEntityDescription.insertNewObject(forEntityName: entityName, into: self) as! T
         }
